@@ -59,23 +59,24 @@ func (s *Scraper) readConsulMetrics() {
 			gauges := s.changeNames(res.Gauges)
 			for _, gauge := range gauges {
 				if _, ok := s.cc[gauge.Name]; !ok {
-					s.cc[gauge.Name] = s.generateCounter(gauges)
+					if c, err := s.generateCounter(gauge); err == nil {
+						s.cc[gauge.Name] = c
+						s.cc[gauge.Name].Set(float64(gauge.Value))
+					}
+				} else {
+					s.cc[gauge.Name].Set(float64(gauge.Value))
 				}
-				s.cc[gauge.Name].Set(float64(gauge.Value))
 			}
 		}
 	}
 }
 
-func (s *Scraper) generateCounter(gauges []Gauge) *count.Gauge {
+func (s *Scraper) generateCounter(gauge Gauge) (*count.Gauge, error) {
 	var cc *count.Gauge
-	for _, gauge := range gauges {
-		c, err := s.counters.CreateGauge(gauge.Name, gauge.Name, []string{"name"})
-		if err != nil {
-			fmt.Errorf("failed to create counter %s", err)
-		} else {
-			cc = c.WithData(gauge.Name)
-		}
+	c, err := s.counters.CreateGauge(gauge.Name, gauge.Name, []string{"name"})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create counter %s", err)
 	}
-	return cc
+	cc = c.WithData(gauge.Name)
+	return cc, nil
 }
