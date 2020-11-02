@@ -1,4 +1,4 @@
-package main
+package prometheusconsul
 
 type MetricResponse struct {
 	Gauges []Gauge `json:"Gauges"`

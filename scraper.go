@@ -1,4 +1,4 @@
-package main
+package prometheusconsul
 
 import (
 	"encoding/json"
