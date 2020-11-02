@@ -10,11 +10,13 @@ import (
 	"time"
 )
 
+//Scraper struct
 type Scraper struct {
 	cc       map[string]*count.Gauge
 	counters *count.Counters
 }
 
+//NewScraper factory method
 func NewScraper(port int) *Scraper {
 	counters := count.NewCounters(port, true)
 	return &Scraper{cc: map[string]*count.Gauge{}, counters: counters}
