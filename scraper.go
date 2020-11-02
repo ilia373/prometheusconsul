@@ -14,12 +14,13 @@ import (
 type Scraper struct {
 	cc       map[string]*count.Gauge
 	counters *count.Counters
+	done     chan bool
 }
 
 //NewScraper factory method
 func NewScraper(port int) *Scraper {
 	counters := count.NewCounters(port, true)
-	return &Scraper{cc: map[string]*count.Gauge{}, counters: counters}
+	return &Scraper{cc: map[string]*count.Gauge{}, counters: counters, done: make(chan bool)}
 }
 
 func (s *Scraper) Start() error {
@@ -29,6 +30,7 @@ func (s *Scraper) Start() error {
 }
 
 func (s *Scraper) Close() error {
+	s.done <- true
 	return s.counters.Close()
 }
 
@@ -47,6 +49,8 @@ func (s *Scraper) readConsulMetrics() {
 	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
+		case <-s.done:
+			return
 		case <-ticker.C:
 			resp, err := http.Get("http://127.0.0.1:8500/v1/agent/metrics")
 			if err != nil {
